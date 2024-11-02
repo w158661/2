@@ -75,15 +75,9 @@
         }
 
         @keyframes float {
-            0% {
-                transform: perspective(800px) rotateY(10deg) translateY(0px);
-            }
-            50% {
-                transform: perspective(800px) rotateY(10deg) translateY(-10px);
-            }
-            100% {
-                transform: perspective(800px) rotateY(10deg) translateY(0px);
-            }
+            0% { transform: perspective(800px) rotateY(10deg) translateY(0px); }
+            50% { transform: perspective(800px) rotateY(10deg) translateY(-10px); }
+            100% { transform: perspective(800px) rotateY(10deg) translateY(0px); }
         }
 
         .avatar:hover {
@@ -138,15 +132,39 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
-        .static-visualizer {
+        .visualizer {
             position: absolute;
-            top: 100px; /* Adjust this value for spacing */
+            top: 120px;
             right: 20px;
-            height: 20px; /* Fixed height for the visualizer */
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            width: 100px; /* Width based on design */
-            margin-top: 10px; /* Space from time display */
+            display: none; /* 初始隐藏 */
+            gap: 5px;
+            align-items: center;
+            height: 60px;
+            width: 300px;
+            padding: 10px;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        .bar {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.3));
+            transition: all 0.1s ease;
+            transform-origin: center;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .bar::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: inherit;
+            transform: scaleY(-1);
+            opacity: 0.3;
         }
 
         .social-icons {
@@ -245,8 +263,10 @@
                 top: 220px;
             }
             .time { font-size: 2rem; }
-            .static-visualizer {
-                width: 80px; /* Adjusted for smaller screens */
+            .visualizer {
+                width: 200px;
+                height: 40px;
+                top: 100px;
             }
             .social-icons a {
                 width: 40px;
@@ -269,17 +289,6 @@
             from { transform: translateX(20px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .rhythm-bar {
-        position: absolute;
-        top: 150px; /* 根据需要调整位置 */
-        left: 20px;
-        width: 300px; /* 设置宽度 */
-        height: 20px; /* 初始高度 */
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
-        border-radius: 0 0 12px 12px; /* 向下开口 */
-        transition: height 0.1s ease; /* 动态变化 */
-        display: none; /* 默认隐藏 */
-    }
     </style>
 </head>
 <body>
@@ -297,7 +306,7 @@
         <div class="date" id="date"></div>
     </div>
     
-    <div class="static-visualizer"></div> <!-- Static visualizer -->
+    <div class="visualizer" id="visualizer"></div>
     
     <div class="social-icons">
         <a href="https://space.bilibili.com" target="_blank" class="hvr-float">
@@ -321,8 +330,6 @@
         <i class="ri-volume-mute-fill" id="audioIcon"></i>
     </div>
 
-    <div id="rhythmBar" class="rhythm-bar"></div>
-
     <audio id="bgMusic" src="1.wav"></audio>
 
     <script>
@@ -331,14 +338,18 @@
         const audioControl = document.getElementById('audioControl');
         const audioIcon = document.getElementById('audioIcon');
         const audio = document.getElementById('bgMusic');
+        const visualizer = document.getElementById('visualizer');
 
         audioControl.onclick = () => {
             if (isPlaying) {
                 audio.pause();
                 audioIcon.className = 'ri-volume-mute-fill';
+                visualizer.style.display = 'none';
             } else {
                 audio.play();
                 audioIcon.className = 'ri-volume-up-fill';
+                visualizer.style.display = 'flex';
+                initializeAudioVisualizer();
             }
             isPlaying = !isPlaying;
         };
@@ -376,7 +387,7 @@
                     if (index < poem.length) {
                         poemElement.textContent += poem.charAt(index);
                         index++;
-                        setTimeout(typeWriter, Math.random() * 100 + 50); // 随机打字速度
+                        setTimeout(typeWriter, Math.random() * 100 + 50);
                     } else {
                         setTimeout(() => {
                             poemElement.style.opacity = '0';
@@ -392,6 +403,50 @@
             } catch (error) {
                 console.error('Error fetching poem:', error);
             }
+        }
+
+        // 音频可视化
+        function initializeAudioVisualizer() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaElementSource(audio);
+            
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 64;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            visualizer.innerHTML = '';
+            for (let i = 0; i < bufferLength; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                visualizer.appendChild(bar);
+            }
+
+            function updateVisualizer() {
+                if (!isPlaying) return;
+                
+                analyser.getByteFrequencyData(dataArray);
+                const bars = document.querySelectorAll('.bar');
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * 50;
+                    const bar = bars[i];
+                    
+                    // 使用transform实现更流畅的动画
+                    bar.style.transform = `scaleY(${barHeight})`;
+                    
+                    // 根据音频强度改变透明度
+                    const opacity = 0.3 + (barHeight / 50) * 0.7;
+                    bar.style.opacity = opacity;
+                }
+                
+                requestAnimationFrame(updateVisualizer);
+            }
+            
+            updateVisualizer();
         }
 
         // 模态框功能
@@ -424,49 +479,35 @@
         modalOverlay.onclick = hideModal;
         modal.onclick = (e) => e.stopPropagation();
 
-        // 音乐
-        const audio = document.getElementById('bgMusic');
-    const rhythmBar = document.getElementById('rhythmBar');
-
-    audioControl.onclick = () => {
-        if (isPlaying) {
-            audio.pause();
-            rhythmBar.style.display = 'none'; // 停止时隐藏节奏条
-        } else {
-            audio.play();
-            rhythmBar.style.display = 'block'; // 播放时显示节奏条
-            animateRhythm();
-        }
-        isPlaying = !isPlaying;
-    };
-
-    function animateRhythm() {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaElementSource(audio);
-        
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-        analyser.fftSize = 256; // 设置 FFT 大小
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        function updateRhythmBar() {
-            analyser.getByteFrequencyData(dataArray);
-            const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-            rhythmBar.style.height = (average / 2) + 'px'; // 根据平均值调整高度
-            requestAnimationFrame(updateRhythmBar);
-        }
-        
-        updateRhythmBar();
-    }
-
         // 初始化
         fetchPoem();
         document.body.onload = () => {
             const avatar = document.querySelector('.avatar');
             avatar.style.opacity = '1';
         };
+
+        // 错误处理
+        audio.onerror = () => {
+            console.error('Audio file loading error');
+            audioControl.style.display = 'none';
+        };
+
+        // 添加页面可见性处理
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isPlaying) {
+                audio.pause();
+                audioIcon.className = 'ri-volume-mute-fill';
+                visualizer.style.display = 'none';
+                isPlaying = false;
+            }
+        });
+
+        // 添加音频结束处理
+        audio.addEventListener('ended', () => {
+            audioIcon.className = 'ri-volume-mute-fill';
+            visualizer.style.display = 'none';
+            isPlaying = false;
+        });
     </script>
 </body>
 </html>
