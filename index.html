@@ -443,7 +443,9 @@
                     bar.style.opacity = opacity;
                 }
                 
-                requestAnimationFrame(updateVisualizer);
+                if(isPlaying) {
+                    requestAnimationFrame(updateVisualizer);
+                }
             }
             
             updateVisualizer();
@@ -508,6 +510,21 @@
             visualizer.style.display = 'none';
             isPlaying = false;
         });
+
+        // 防止内存泄漏
+        let animationFrameId;
+        function cleanup() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            if (audio) {
+                audio.pause();
+                audio.src = '';
+            }
+        }
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', cleanup);
     </script>
 </body>
 </html>
