@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILOVEG&</title>
+    <link rel="icon" href="2.jpg" type="image/jpeg">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/hover.css/2.3.1/css/hover-min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.6.0/remixicon.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        #bgVideo {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+            backdrop-filter: blur(3px);
+        }
+
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 3rem;
+            font-weight: bold;
+            animation: bounceIn 1s;
+            background: linear-gradient(45deg, #fff, #7f7fd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .avatar {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: url('1.jpg') center/cover;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: perspective(800px) rotateY(10deg);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid rgba(255,255,255,0.2);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: perspective(800px) rotateY(10deg) translateY(0px);
+            }
+            50% {
+                transform: perspective(800px) rotateY(10deg) translateY(-10px);
+            }
+            100% {
+                transform: perspective(800px) rotateY(10deg) translateY(0px);
+            }
+        }
+
+        .avatar:hover {
+            transform: perspective(800px) rotateY(-10deg) scale(1.05);
+            border-color: rgba(255,255,255,0.8);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .poem {
+            position: absolute;
+            top: 270px;
+            left: 20px;
+            font-size: 1.2rem;
+            width: 300px;
+            min-height: 60px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .poem:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .time-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: center;
+            animation: slideInRight 1s ease;
+        }
+
+        .time {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #fff, #7f7fd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+            transition: all 0.3s ease;
+        }
+
+        .date {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 5px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .visualizer {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 100px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .bar {
+            width: 4px;
+            background: linear-gradient(to top, rgba(255,255,255,0.3), rgba(255,255,255,0.8));
+            transition: all 0.1s ease;
+            border-radius: 2px;
+            transform-origin: bottom;
+        }
+
+        .social-icons {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 15px;
+            animation: slideInUp 1s ease;
+        }
+
+        .social-icons a {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 1.2rem;
+        }
+
+        .social-icons a:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            color: #333;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            backdrop-filter: blur(3px);
+        }
+
+        .audio-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .audio-control:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 2rem; }
+            .avatar { 
+                width: 120px; 
+                height: 120px;
+                top: 80px;
+            }
+            .poem { 
+                width: 250px; 
+                font-size: 1rem; 
+                top: 220px;
+            }
+            .time { font-size: 2rem; }
+            .visualizer {
+                width: 150px;
+                height: 80px;
+            }
+            .social-icons a {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <video id="bgVideo" autoplay muted loop>
+        <source src="1.mp4" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+    
+    <h1 class="title animate__animated animate__bounceIn">ILOVEG&</h1>
+    <div class="avatar"></div>
+    <div class="poem" id="poem"></div>
+    
+    <div class="time-container">
+        <div class="time" id="time"></div>
+        <div class="date" id="date"></div>
+    </div>
+    
+    <div class="visualizer" id="visualizer"></div>
+    
+    <div class="social-icons">
+        <a href="https://space.bilibili.com" target="_blank" class="hvr-float">
+            <i class="ri-bilibili-fill"></i>
+        </a>
+        <a href="#" id="wechatBtn" class="hvr-float">
+            <i class="ri-wechat-fill"></i>
+        </a>
+        <a href="#" id="qqBtn" class="hvr-float">
+            <i class="ri-qq-fill"></i>
+        </a>
+        <a href="https://github.com/w158661" target="_blank" class="hvr-float">
+            <i class="ri-github-fill"></i>
+        </a>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="modal"></div>
+
+    <div class="audio-control" id="audioControl">
+        <i class="ri-volume-mute-fill" id="audioIcon"></i>
+    </div>
+
+    <audio id="bgMusic" src="1.wav"></audio>
+
+    <script>
+        // 音频控制状态
+        let isPlaying = false;
+        const audioControl = document.getElementById('audioControl');
+        const audioIcon = document.getElementById('audioIcon');
+        const audio = document.getElementById('bgMusic');
+
+        audioControl.onclick = () => {
+            if (isPlaying) {
+                audio.pause();
+                audioIcon.className = 'ri-volume-mute-fill';
+            } else {
+                audio.play();
+                audioIcon.className = 'ri-volume-up-fill';
+                initializeAudioVisualizer();
+            }
+            isPlaying = !isPlaying;
+        };
+
+        // 时钟功能
+        function updateDateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+            const date = now.toLocaleDateString('zh-CN', {
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            
+            document.getElementById('time').textContent = time;
+            document.getElementById('date').textContent = date;
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // 古诗词功能
+        async function fetchPoem() {
+            try {
+                const response = await fetch('https://v1.jinrishici.com/rensheng.txt');
+                const poem = await response.text();
+                const poemElement = document.getElementById('poem');
+                poemElement.textContent = '';
+                let index = 0;
+                
+                function typeWriter() {
+                    if (index < poem.length) {
+                        poemElement.textContent += poem.charAt(index);
+                        index++;
+                        setTimeout(typeWriter, Math.random() * 100 + 50); // 随机打字速度
+                    } else {
+                        setTimeout(() => {
+                            poemElement.style.opacity = '0';
+                            setTimeout(() => {
+                                poemElement.style.opacity = '1';
+                                fetchPoem();
+                            }, 500);
+                        }, 5000);
+                    }
+                }
+                
+                typeWriter();
+            } catch (error) {
+                console.error('Error fetching poem:', error);
+            }
+        }
+
+        // 音频可视化
+        function initializeAudioVisualizer() {
+            const visualizer = document.getElementById('visualizer');
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaElementSource(audio);
+            
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 128;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            // 创建音频条
+            visualizer.innerHTML = '';
+            for (let i = 0; i < bufferLength; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                visualizer.appendChild(bar);
+            }
+
+            function updateVisualizer() {
+                analyser.getByteFrequencyData(dataArray);
+                const bars = document.querySelectorAll('.bar');
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] / 2;
+                    bars[i].style.height = barHeight + 'px';
+                    
+                    // 根据音频强度改变透明度
+                    const opacity = 0.3 + (barHeight / 100) * 0.7;
+                    bars[i].style.opacity = opacity;
+                }
+                
+                requestAnimationFrame(updateVisualizer);
+            }
+            
+            updateVisualizer();
+        }
+
+        // 模态框功能
+        const modal = document.getElementById('modal');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const wechatBtn = document.getElementById('wechatBtn');
+        const qqBtn = document.getElementById('qqBtn');
+
+        function showModal(content) {
+            modal.textContent = content;
+            modal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+        }
+
+        function hideModal() {
+            modal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        }
+
+        wechatBtn.onclick = (e) => {
+            e.preventDefault();
+            showModal('微信号: iloveGuo_810');
+        };
+
+        qqBtn.onclick = (e) => {
+            e.preventDefault();
+            showModal('QQ号: 809747429');
+        };
+
+        modalOverlay.onclick = hideModal;
+        modal.onclick = (e) => e.stopPropagation();
+
+        // 初始化
+        fetchPoem();
+        document.body.onload = () => {
+            const avatar = document.querySelector('.avatar');
+            avatar.style.opacity = '1';
+        };
+    </script>
+</body>
+</html>
