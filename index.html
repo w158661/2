@@ -136,35 +136,23 @@
             position: absolute;
             top: 120px;
             right: 20px;
-            display: none; /* 初始隐藏 */
-            gap: 5px;
-            align-items: center;
-            height: 60px;
+            display: none;
+            gap: 3px;
+            align-items: flex-end;
+            height: 100px;
             width: 300px;
             padding: 10px;
-            transition: all 0.3s ease;
-            transform-origin: center;
+            transition: opacity 0.3s ease;
         }
 
         .bar {
             flex: 1;
-            height: 2px;
-            background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.3));
-            transition: all 0.1s ease;
-            transform-origin: center;
+            min-width: 3px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 100%);
+            transition: all 0.05s linear;
+            transform-origin: bottom;
             border-radius: 2px;
-            position: relative;
-        }
-
-        .bar::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: inherit;
-            border-radius: inherit;
-            transform: scaleY(-1);
-            opacity: 0.3;
+            height: 3px;
         }
 
         .social-icons {
@@ -265,7 +253,7 @@
             .time { font-size: 2rem; }
             .visualizer {
                 width: 200px;
-                height: 40px;
+                height: 80px;
                 top: 100px;
             }
             .social-icons a {
@@ -333,25 +321,94 @@
     <audio id="bgMusic" src="1.wav"></audio>
 
     <script>
-        // 音频控制状态
+        // 全局变量声明
+        let audioContext = null;
+        let analyser = null;
+        let source = null;
+        let animationFrameId = null;
+        let dataArray = null;
         let isPlaying = false;
+
         const audioControl = document.getElementById('audioControl');
         const audioIcon = document.getElementById('audioIcon');
         const audio = document.getElementById('bgMusic');
         const visualizer = document.getElementById('visualizer');
 
-        audioControl.onclick = () => {
-            if (isPlaying) {
-                audio.pause();
-                audioIcon.className = 'ri-volume-mute-fill';
-                visualizer.style.display = 'none';
-            } else {
-                audio.play();
-                audioIcon.className = 'ri-volume-up-fill';
-                visualizer.style.display = 'flex';
-                initializeAudioVisualizer();
+        // 音频可视化初始化函数
+        function initializeAudioVisualizer() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaElementSource(audio);
+                
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                analyser.fftSize = 128;
+                analyser.smoothingTimeConstant = 0.8;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                // 创建音频条
+                visualizer.innerHTML = '';
+                for (let i = 0; i < bufferLength; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    visualizer.appendChild(bar);
+                }
             }
-            isPlaying = !isPlaying;
+
+            function updateVisualizer() {
+                if (!isPlaying) {
+                    visualizer.style.display = 'none';
+                    return;
+                }
+
+                visualizer.style.display = 'flex';
+                analyser.getByteFrequencyData(dataArray);
+                const bars = visualizer.children;
+                
+                for (let i = 0; i < bars.length; i++) {
+                    const bar = bars[i];
+                    let barHeight = (dataArray[i] / 255) * 100;
+                    barHeight = Math.max(3, barHeight);
+                    bar.style.height = `${barHeight}px`;
+                    
+                    const hue = (i / bars.length) * 180 + 180;
+                    bar.style.background = `linear-gradient(180deg, 
+                        hsla(${hue}, 100%, 70%, 0.8) 0%, 
+                        hsla(${hue}, 100%, 50%, 0.2) 100%)`;
+                }
+                
+                animationFrameId = requestAnimationFrame(updateVisualizer);
+            }
+            
+            updateVisualizer();
+        }
+
+        // 音频控制点击事件
+        audioControl.onclick = async () => {
+            try {
+                if (isPlaying) {
+                    audio.pause();
+                    audioIcon.className = 'ri-volume-mute-fill';
+                    visualizer.style.display = 'none';
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                    }
+                } else {
+                    await audio.play();
+                    audioIcon.className = 'ri-volume-up-fill';
+                    visualizer.style.display = 'flex';
+                    if (!audioContext) {
+                        initializeAudioVisualizer();
+                    }
+                }
+                isPlaying = !isPlaying;
+            } catch (error) {
+                console.error('Error playing audio:', error);
+            }
         };
 
         // 时钟功能
@@ -405,52 +462,6 @@
             }
         }
 
-        // 音频可视化
-        function initializeAudioVisualizer() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaElementSource(audio);
-            
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-            analyser.fftSize = 64;
-            
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            visualizer.innerHTML = '';
-            for (let i = 0; i < bufferLength; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                visualizer.appendChild(bar);
-            }
-
-            function updateVisualizer() {
-                if (!isPlaying) return;
-                
-                analyser.getByteFrequencyData(dataArray);
-                const bars = document.querySelectorAll('.bar');
-                
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = (dataArray[i] / 255) * 50;
-                    const bar = bars[i];
-                    
-                    // 使用transform实现更流畅的动画
-                    bar.style.transform = `scaleY(${barHeight})`;
-                    
-                    // 根据音频强度改变透明度
-                    const opacity = 0.3 + (barHeight / 50) * 0.7;
-                    bar.style.opacity = opacity;
-                }
-                
-                if(isPlaying) {
-                    requestAnimationFrame(updateVisualizer);
-                }
-            }
-            
-            updateVisualizer();
-        }
-
         // 模态框功能
         const modal = document.getElementById('modal');
         const modalOverlay = document.getElementById('modalOverlay');
@@ -481,20 +492,27 @@
         modalOverlay.onclick = hideModal;
         modal.onclick = (e) => e.stopPropagation();
 
-        // 初始化
-        fetchPoem();
-        document.body.onload = () => {
-            const avatar = document.querySelector('.avatar');
-            avatar.style.opacity = '1';
-        };
+        // 资源清理函数
+        function cleanup() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            if (audio) {
+                audio.pause();
+                audio.src = '';
+            }
+        }
 
         // 错误处理
-        audio.onerror = () => {
-            console.error('Audio file loading error');
+        audio.addEventListener('error', (e) => {
+            console.error('Audio error:', error);
             audioControl.style.display = 'none';
-        };
+        });
 
-        // 添加页面可见性处理
+        // 页面可见性变化处理
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && isPlaying) {
                 audio.pause();
@@ -504,27 +522,22 @@
             }
         });
 
-        // 添加音频结束处理
+        // 音频播放结束处理
         audio.addEventListener('ended', () => {
             audioIcon.className = 'ri-volume-mute-fill';
             visualizer.style.display = 'none';
             isPlaying = false;
         });
 
-        // 防止内存泄漏
-        let animationFrameId;
-        function cleanup() {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            if (audio) {
-                audio.pause();
-                audio.src = '';
-            }
-        }
-
-        // 页面卸载时清理资源
+        // 页面卸载时清理
         window.addEventListener('beforeunload', cleanup);
+
+        // 初始化
+        fetchPoem();
+        document.body.onload = () => {
+            const avatar = document.querySelector('.avatar');
+            avatar.style.opacity = '1';
+        };
     </script>
 </body>
 </html>
