@@ -269,6 +269,17 @@
             from { transform: translateX(20px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        .rhythm-bar {
+        position: absolute;
+        top: 150px; /* 根据需要调整位置 */
+        left: 20px;
+        width: 300px; /* 设置宽度 */
+        height: 20px; /* 初始高度 */
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+        border-radius: 0 0 12px 12px; /* 向下开口 */
+        transition: height 0.1s ease; /* 动态变化 */
+        display: none; /* 默认隐藏 */
+    }
     </style>
 </head>
 <body>
@@ -309,6 +320,8 @@
     <div class="audio-control" id="audioControl">
         <i class="ri-volume-mute-fill" id="audioIcon"></i>
     </div>
+
+    <div id="rhythmBar" class="rhythm-bar"></div>
 
     <audio id="bgMusic" src="1.wav"></audio>
 
@@ -410,6 +423,43 @@
 
         modalOverlay.onclick = hideModal;
         modal.onclick = (e) => e.stopPropagation();
+
+        // 音乐
+        const audio = document.getElementById('bgMusic');
+    const rhythmBar = document.getElementById('rhythmBar');
+
+    audioControl.onclick = () => {
+        if (isPlaying) {
+            audio.pause();
+            rhythmBar.style.display = 'none'; // 停止时隐藏节奏条
+        } else {
+            audio.play();
+            rhythmBar.style.display = 'block'; // 播放时显示节奏条
+            animateRhythm();
+        }
+        isPlaying = !isPlaying;
+    };
+
+    function animateRhythm() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 256; // 设置 FFT 大小
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function updateRhythmBar() {
+            analyser.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+            rhythmBar.style.height = (average / 2) + 'px'; // 根据平均值调整高度
+            requestAnimationFrame(updateRhythmBar);
+        }
+        
+        updateRhythmBar();
+    }
 
         // 初始化
         fetchPoem();
